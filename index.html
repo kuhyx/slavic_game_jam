@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Danger Field Game</title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="game-container">
+        <h1>Danger Field Game</h1>
+        <div class="game-info">
+          <p>Use WASD or Arrow Keys to move</p>
+          <p class="visual-warning">⚠️ Red squares are visually dangerous!</p>
+          <p class="audio-warning">🔊 Listen carefully - directional audio warns of hidden dangers!</p>
+          <p class="audio-hint">🎧 Use headphones for best directional audio experience</p>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="controls">
+          <button id="soundToggle">🔊 Sound: ON</button>
+          <button id="vibrationToggle">📳 Vibration: ON</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
