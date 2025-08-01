@@ -1,79 +1,143 @@
+import { generateRandomAnimalSet, createAnimalDirections, getDisplayInfo } from './animals.js';
+
 export class InputHandler {
   constructor() {
-    this.keys = new Set();
     this.onMove = null; // Callback for movement
-    this.moveDelay = 150; // Milliseconds between moves
-    this.lastMoveTime = 0;
+    this.onInvalidMove = null; // Callback for invalid movement
+    this.onAnimalsChanged = null; // Callback when animals are randomized
+    this.currentInput = '';
+    this.isListening = false;
+    
+    // Generate random animals for this game session
+    this.selectedAnimals = generateRandomAnimalSet();
+    this.animalDirections = createAnimalDirections(this.selectedAnimals);
+    this.displayInfo = getDisplayInfo(this.selectedAnimals);
     
     this.bindEvents();
   }
   
   bindEvents() {
-    document.addEventListener('keydown', (e) => this.handleKeyDown(e));
-    document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+    // Create input field if it doesn't exist
+    this.createInputField();
     
-    // Prevent default behavior for game keys
-    document.addEventListener('keydown', (e) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
+    // Listen for Enter key on the input field
+    this.inputField.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
         e.preventDefault();
+        this.processAnimalInput();
+      }
+    });
+    
+    // Focus the input field
+    this.inputField.focus();
+  }
+  
+  
+  createInputField() {
+    // Check if input field already exists
+    this.inputField = document.getElementById('animalInput');
+    if (!this.inputField) {
+      // Create the input field and add it to the game container
+      this.inputField = document.createElement('input');
+      this.inputField.id = 'animalInput';
+      this.inputField.type = 'text';
+      this.inputField.placeholder = 'Type an animal name to move...';
+      this.inputField.className = 'animal-input';
+      
+      // Add to the controls section
+      const controls = document.querySelector('.controls');
+      if (controls) {
+        controls.appendChild(this.inputField);
+      }
+    }
+  }
+  
+  processAnimalInput() {
+    const input = this.inputField.value.toLowerCase().trim();
+    this.inputField.value = ''; // Clear input
+    
+    if (input === '') return;
+    
+    // Check if the input matches any animal
+    const animalMove = this.animalDirections[input];
+    
+    if (animalMove && this.onMove) {
+      // Valid animal - trigger movement
+      this.onMove(animalMove);
+    } else if (this.onInvalidMove) {
+      // Invalid animal - trigger danger sound
+      this.onInvalidMove(input);
+    }
+  }
+  
+  getDirectionEmojis() {
+    return {
+      up: '🦅',    // Bird for up
+      down: '🦔',  // Mole for down  
+      left: '🐺',  // Wolf for left
+      right: '🐎'  // Horse for right
+    };
+  }
+  
+  getValidAnimals() {
+    return Object.keys(this.animalDirections);
+  }
+  
+  // Randomize animals for a new game
+  randomizeAnimals() {
+    this.selectedAnimals = generateRandomAnimalSet();
+    this.animalDirections = createAnimalDirections(this.selectedAnimals);
+    this.displayInfo = getDisplayInfo(this.selectedAnimals);
+    
+    // Update the UI display
+    this.updateAnimalDisplay();
+    
+    // Notify game that animals have changed
+    if (this.onAnimalsChanged) {
+      this.onAnimalsChanged(this.selectedAnimals);
+    }
+  }
+  
+  // Update the animal direction display in the UI
+  updateAnimalDisplay() {
+    const directions = ['up', 'down', 'left', 'right'];
+    
+    directions.forEach(direction => {
+      const element = document.querySelector(`[data-direction="${direction}"]`);
+      if (element) {
+        const info = this.displayInfo[direction];
+        element.innerHTML = `${info.emoji} <strong>${info.names}</strong> → Move ${direction.toUpperCase()}`;
       }
     });
   }
   
-  handleKeyDown(e) {
-    this.keys.add(e.code);
-    this.processMovement();
+  // Get current selected animals info for display
+  getSelectedAnimals() {
+    return this.selectedAnimals;
   }
   
-  handleKeyUp(e) {
-    this.keys.delete(e.code);
+  // Get display info for UI
+  getDisplayInfo() {
+    return this.displayInfo;
   }
-  
-  processMovement() {
-    const now = Date.now();
-    if (now - this.lastMoveTime < this.moveDelay) {
-      return; // Too soon to move again
-    }
-    
-    let direction = null;
-    
-    // Check for movement keys (WASD or Arrow keys)
-    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) {
-      direction = { x: 0, y: -1 };
-    } else if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) {
-      direction = { x: 0, y: 1 };
-    } else if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) {
-      direction = { x: -1, y: 0 };
-    } else if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) {
-      direction = { x: 1, y: 0 };
-    }
-    
-    if (direction && this.onMove) {
-      this.onMove(direction);
-      this.lastMoveTime = now;
-    }
-  }
-  
-  // Method to handle continuous key holding
+
+  // Method to handle continuous key holding - no longer needed
   update() {
-    if (this.keys.size > 0) {
-      this.processMovement();
-    }
+    // No longer needed for animal input system
   }
-  
-  // Get current input state
+
+  // Get current input state - simplified for animal system
   getInputState() {
     return {
-      up: this.keys.has('KeyW') || this.keys.has('ArrowUp'),
-      down: this.keys.has('KeyS') || this.keys.has('ArrowDown'),
-      left: this.keys.has('KeyA') || this.keys.has('ArrowLeft'),
-      right: this.keys.has('KeyD') || this.keys.has('ArrowRight'),
+      currentInput: this.inputField ? this.inputField.value : '',
+      isActive: this.inputField === document.activeElement
     };
   }
-  
+
   // Clean up event listeners
   destroy() {
-    document.removeEventListener('keydown', this.handleKeyDown);
-    document.removeEventListener('keyup', this.handleKeyUp);
+    if (this.inputField) {
+      this.inputField.remove();
+    }
   }
 }

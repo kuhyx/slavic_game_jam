@@ -6,8 +6,14 @@ export class AudioSystem {
     this.initialized = false;
     this.lastSpokenDirection = '';
     this.speechEnabled = true;
+    this.animalData = null; // Store current animal data
     
     this.initializeAudio();
+  }
+  
+  // Update animal data when animals are randomized
+  updateAnimalData(selectedAnimals) {
+    this.animalData = selectedAnimals;
   }
   
   async initializeAudio() {
@@ -237,6 +243,135 @@ export class AudioSystem {
     this.createOscillator(440, 'sine', 0.05);
   }
   
+  // Placeholder method for animal sounds
+  async playAnimalSound(direction) {
+    await this.ensureAudioContext();
+    
+    // Try to load and play actual audio file if available
+    if (this.animalData && this.animalData[direction]) {
+      const animal = this.animalData[direction];
+      
+      // Try to play the actual audio file
+      try {
+        await this.playAudioFile(animal.audioFile);
+        console.log(`${animal.emoji} Playing ${animal.names[0]} sound: ${animal.audioFile}`);
+        return;
+      } catch (error) {
+        console.warn(`Could not play audio file ${animal.audioFile}, using placeholder sound`);
+      }
+    }
+    
+    // Fallback to placeholder sounds for different directions
+    switch (direction) {
+      case 'up':
+        // High pitched chirp
+        this.createOscillator(800, 'sine', 0.2);
+        setTimeout(() => this.createOscillator(1000, 'sine', 0.15), 100);
+        console.log('🦅 Playing bird sound placeholder');
+        break;
+      case 'down':
+        // Low rumbling sound
+        this.createOscillator(150, 'sawtooth', 0.3);
+        console.log('🦔 Playing mole sound placeholder');
+        break;
+      case 'left':
+        // Howling sound
+        this.createOscillator(300, 'triangle', 0.4);
+        setTimeout(() => this.createOscillator(350, 'triangle', 0.3), 200);
+        console.log('🐺 Playing wolf sound placeholder');
+        break;
+      case 'right':
+        // Galloping rhythm
+        this.createOscillator(200, 'square', 0.1);
+        setTimeout(() => this.createOscillator(250, 'square', 0.1), 100);
+        setTimeout(() => this.createOscillator(200, 'square', 0.1), 200);
+        setTimeout(() => this.createOscillator(250, 'square', 0.1), 300);
+        console.log('🐎 Playing horse sound placeholder');
+        break;
+      default:
+        this.playMoveSound();
+    }
+  }
+  
+  // Danger sounds for when movement is blocked
+  async playDangerSound(direction) {
+    await this.ensureAudioContext();
+    
+    // Try to load and play actual danger audio file if available
+    if (this.animalData && this.animalData[direction]) {
+      const animal = this.animalData[direction];
+      
+      // Try to play the actual danger audio file
+      try {
+        await this.playAudioFile(animal.dangerAudioFile);
+        console.log(`${animal.emoji}⚠️ Playing ${animal.names[0]} danger sound: ${animal.dangerAudioFile}`);
+        return;
+      } catch (error) {
+        console.warn(`Could not play danger audio file ${animal.dangerAudioFile}, using placeholder sound`);
+      }
+    }
+    
+    // Play distorted/warning version of animal sounds
+    switch (direction) {
+      case 'up':
+        // Distressed bird sound
+        this.createOscillator(800, 'sawtooth', 0.3);
+        this.createOscillator(600, 'sawtooth', 0.3);
+        console.log('🦅⚠️ Playing bird danger sound placeholder');
+        break;
+      case 'down':
+        // Angry mole sound
+        this.createOscillator(100, 'square', 0.4);
+        setTimeout(() => this.createOscillator(80, 'square', 0.3), 150);
+        console.log('🦔⚠️ Playing mole danger sound placeholder');
+        break;
+      case 'left':
+        // Aggressive wolf sound
+        this.createOscillator(250, 'sawtooth', 0.5);
+        setTimeout(() => this.createOscillator(200, 'sawtooth', 0.4), 100);
+        console.log('🐺⚠️ Playing wolf danger sound placeholder');
+        break;
+      case 'right':
+        // Rearing horse sound
+        this.createOscillator(300, 'triangle', 0.2);
+        setTimeout(() => this.createOscillator(400, 'triangle', 0.3), 100);
+        setTimeout(() => this.createOscillator(500, 'triangle', 0.2), 200);
+        console.log('🐎⚠️ Playing horse danger sound placeholder');
+        break;
+      case 'invalid_animal':
+        // Generic error sound
+        this.createOscillator(150, 'sawtooth', 0.3);
+        setTimeout(() => this.createOscillator(120, 'sawtooth', 0.3), 200);
+        console.log('❌ Playing invalid animal sound placeholder');
+        break;
+      default:
+        // Generic danger sound
+        this.createOscillator(200, 'sawtooth', 0.4);
+    }
+  }
+  
+  // Method to play actual audio files
+  async playAudioFile(audioPath) {
+    if (!this.audioContext || !this.initialized) {
+      throw new Error('Audio context not initialized');
+    }
+    
+    return new Promise((resolve, reject) => {
+      const audio = new Audio(audioPath);
+      
+      audio.addEventListener('canplaythrough', () => {
+        audio.play()
+          .then(() => resolve())
+          .catch(reject);
+      });
+      
+      audio.addEventListener('error', reject);
+      
+      // Set volume
+      audio.volume = this.gainNode ? this.gainNode.gain.value : 0.3;
+    });
+  }
+  
   stopAll() {
     this.activeSounds.forEach(sound => {
       try {
@@ -254,5 +389,82 @@ export class AudioSystem {
     if (this.gainNode) {
       this.gainNode.gain.value = Math.max(0, Math.min(1, volume));
     }
+  }
+  
+  // General speech synthesis method
+  speak(text) {
+    if (!this.speechEnabled || !text) {
+      return;
+    }
+    
+    // Check if speech synthesis is supported
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
+    
+    // Stop any current speech
+    speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = 0.8;
+    
+    // Speak the text
+    speechSynthesis.speak(utterance);
+  }
+  
+  // Set speech enabled/disabled
+  setSpeechEnabled(enabled) {
+    this.speechEnabled = enabled;
+    
+    // If disabling speech, stop any current speech
+    if (!enabled && 'speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+  }
+  
+  // Game over sound
+  async playGameOverSound() {
+    await this.ensureAudioContext();
+    
+    // Create a descending game over sound
+    const notes = [330, 294, 262, 220]; // E, D, C, A (descending)
+    
+    notes.forEach((frequency, index) => {
+      setTimeout(() => {
+        this.createOscillator(frequency, 'sawtooth', 0.5);
+      }, index * 150);
+    });
+    
+    // Add a final low note
+    setTimeout(() => {
+      this.createOscillator(147, 'square', 1.0); // Low D
+    }, 600);
+  }
+  
+  // Victory sound
+  async playWinSound() {
+    await this.ensureAudioContext();
+    
+    // Create a victory melody
+    const notes = [262, 330, 392, 523]; // C, E, G, C (one octave higher)
+    
+    notes.forEach((frequency, index) => {
+      setTimeout(() => {
+        this.createOscillator(frequency, 'sine', 0.4);
+      }, index * 100);
+    });
+    
+    // Add harmony
+    setTimeout(() => {
+      this.createOscillator(659, 'sine', 0.6); // E
+    }, 200);
+  }
+  
+  // Play directional proximity sound (uses the existing speakDirections method)
+  playDirectionalProximitySound(directions) {
+    this.speakDirections(directions);
   }
 }

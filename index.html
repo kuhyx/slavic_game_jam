@@ -11,13 +11,27 @@
       <div class="game-container">
         <h1>Danger Field Game</h1>
         <div class="game-info">
-          <p>Use WASD or Arrow Keys to move</p>
+          <p>Type an animal name to move in that direction:</p>
+          <div class="animal-directions">
+            <div class="direction-item" data-direction="up">🦅 <strong>Bird, Eagle, Hawk</strong> → Move UP</div>
+            <div class="direction-item" data-direction="down">🦔 <strong>Mole, Hedgehog, Badger</strong> → Move DOWN</div>
+            <div class="direction-item" data-direction="left">🐺 <strong>Wolf, Dog, Fox</strong> → Move LEFT</div>
+            <div class="direction-item" data-direction="right">🐎 <strong>Horse, Stallion, Mare</strong> → Move RIGHT</div>
+          </div>
           <p class="visual-warning">⚠️ Red squares are deadly - avoid them!</p>
           <p class="audio-warning">🔊 Hidden dangers end the game - listen for directions!</p>
-          <p class="audio-hint">🗣️ Speech directions: "left", "right", "up", "down"</p>
+          <p class="audio-hint">🗣️ Animal sounds indicate movement success or danger!</p>
         </div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="debugInfo" class="debug-info" style="display: none;">
+          <h3>🐛 Debug Information</h3>
+          <p><strong>🔊 Audio Danger Squares:</strong> Blue squares with speaker icon</p>
+          <p><strong>⚠️ Note:</strong> These squares look normal during gameplay but trigger danger sounds when you get close!</p>
+          <p><strong>🎯 Current Animals:</strong> <span id="currentAnimals">Loading...</span></p>
+        </div>
         <div class="controls">
+          <button id="newGameBtn">🎲 New Game</button>
+          <button id="debugToggle">🐛 Debug: OFF</button>
           <button id="soundToggle">🔊 Sound: ON</button>
           <button id="speechToggle">🗣️ Speech: ON</button>
           <button id="vibrationToggle">📳 Vibration: ON</button>

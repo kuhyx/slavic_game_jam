@@ -102,7 +102,9 @@ h1 {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  align-items: center;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .controls button {
@@ -117,6 +119,80 @@ h1 {
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.animal-input {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(76, 175, 80, 0.5);
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  min-width: 250px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.animal-input:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.animal-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.animal-directions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.direction-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.direction-item:hover {
+  background: rgba(76, 175, 80, 0.2);
+  transform: translateY(-1px);
+}
+
+.debug-info {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(68, 68, 255, 0.1);
+  border: 2px solid rgba(68, 68, 255, 0.3);
+  border-radius: 10px;
+  color: #ffffff;
+  text-align: left;
+}
+
+.debug-info h3 {
+  margin-top: 0;
+  color: #4444ff;
+  font-size: 1.2rem;
+}
+
+.debug-info p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.debug-info strong {
+  color: #ffff44;
 }
 
 .controls button:hover {
@@ -151,6 +227,14 @@ h1 {
   
   .controls {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.8rem;
+  }
+  
+  .animal-input {
+    min-width: 200px;
+  }
+  
+  .animal-directions {
+    grid-template-columns: 1fr;
   }
 }

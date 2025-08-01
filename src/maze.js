@@ -6,6 +6,7 @@ export class Maze {
     this.dangerousSquares = new Set();
     this.exitX = cols - 2;
     this.exitY = rows - 2;
+    this.debugMode = false; // Debug mode flag
     
     // Cell types
     this.WALL = 0;
@@ -13,6 +14,11 @@ export class Maze {
     this.DANGEROUS_VISUAL = 2;  // Visually dangerous, no audio
     this.DANGEROUS_AUDIO = 3;   // Looks safe, has audio when near
     this.EXIT = 4;
+  }
+  
+  // Set debug mode to show/hide audio danger squares
+  setDebugMode(enabled) {
+    this.debugMode = enabled;
   }
   
   generate() {
@@ -291,8 +297,7 @@ export class Maze {
             break;
             
           case this.SAFE:
-          case this.DANGEROUS_AUDIO:
-            // Safe squares and audio-danger squares look identical (white)
+            // Regular safe squares (white)
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
             // Add subtle grid lines
@@ -300,8 +305,50 @@ export class Maze {
             ctx.lineWidth = 1;
             ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
             break;
-            //debug
-          // case this.DANGEROUS_AUDIO:  
+            
+          case this.DANGEROUS_AUDIO:
+            if (this.debugMode) {
+              // In debug mode: show audio-danger squares with blue/yellow pattern
+              const debugTime = Date.now() * 0.004;
+              const debugIntensity = (Math.sin(debugTime + x * 2 + y * 2) + 1) * 0.5;
+              const blue = Math.floor(100 + debugIntensity * 155);
+              const yellow = Math.floor(150 + debugIntensity * 105);
+              
+              // Alternating blue/yellow background
+              ctx.fillStyle = `rgb(50, 50, ${blue})`;
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add warning pattern
+              ctx.fillStyle = `rgba(${yellow}, ${yellow}, 0, ${0.4 + debugIntensity * 0.3})`;
+              ctx.fillRect(pixelX + 3, pixelY + 3, cellSize - 6, cellSize - 6);
+              
+              // Add audio symbol
+              ctx.fillStyle = '#ffffff';
+              ctx.font = `${cellSize * 0.4}px Arial`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('🔊', pixelX + cellSize / 2, pixelY + cellSize / 2);
+              
+              // Add debug border
+              ctx.strokeStyle = '#4444ff';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add small text indicator
+              ctx.fillStyle = '#000000';
+              ctx.font = `${cellSize * 0.2}px Arial`;
+              ctx.textAlign = 'center';
+              ctx.fillText('AUDIO', pixelX + cellSize / 2, pixelY + cellSize * 0.8);
+            } else {
+              // Normal mode: looks like safe squares (white)
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              // Add subtle grid lines
+              ctx.strokeStyle = '#e0e0e0';
+              ctx.lineWidth = 1;
+              ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+            }
+            break;
 
             
           case this.DANGEROUS_VISUAL:
