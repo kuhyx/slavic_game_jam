@@ -35,6 +35,7 @@ export class Game {
   setupControls() {
     const newGameBtn = document.getElementById('newGameBtn');
     const debugToggle = document.getElementById('debugToggle');
+    const testAudioBtn = document.getElementById('testAudioBtn');
     const soundToggle = document.getElementById('soundToggle');
     const speechToggle = document.getElementById('speechToggle');
     const vibrationToggle = document.getElementById('vibrationToggle');
@@ -61,6 +62,19 @@ export class Game {
       
       if (this.speechEnabled) {
         this.audioSystem.speak(this.debugMode ? 'Debug mode enabled. Audio danger squares are now visible.' : 'Debug mode disabled. Audio danger squares are hidden.');
+      }
+    });
+
+    testAudioBtn.addEventListener('click', async () => {
+      console.log('🔊 Manual audio test triggered');
+      await this.audioSystem.ensureAudioContext();
+      try {
+        await this.audioSystem.testAudioFile('sounds/bee_danger.mp3');
+        console.log('✅ Manual audio test successful');
+        alert('Audio test successful! Check console for details.');
+      } catch (error) {
+        console.error('❌ Manual audio test failed:', error);
+        alert('Audio test failed! Check console for details.');
       }
     });
 
@@ -265,12 +279,31 @@ export class Game {
     // Initialize the UI with current animals
     this.updateAnimalDisplay();
     
+    // Initialize audio system with current animals
+    const selectedAnimals = this.inputHandler.getSelectedAnimals();
+    this.audioSystem.updateAnimalData(selectedAnimals);
+    
+    // Test audio file accessibility
+    this.testAudioSystem();
+    
     // Initialize debug info if debug mode is on
     if (this.debugMode) {
       this.updateDebugInfo();
     }
     
     requestAnimationFrame((time) => this.gameLoop(time));
+  }
+  
+  // Test audio system
+  async testAudioSystem() {
+    console.log('🎵 Testing audio system...');
+    try {
+      await this.audioSystem.testAudioFile('sounds/bee_danger.mp3');
+      console.log('🎵 Audio system test passed!');
+    } catch (error) {
+      console.error('🎵 Audio system test failed:', error);
+      console.log('🎵 Will use fallback synthesized sounds');
+    }
   }
   
   // Restart game with new randomized animals

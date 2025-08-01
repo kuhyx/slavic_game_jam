@@ -14,6 +14,31 @@ export class AudioSystem {
   // Update animal data when animals are randomized
   updateAnimalData(selectedAnimals) {
     this.animalData = selectedAnimals;
+    console.log('Updated animal data in audio system:', this.animalData);
+  }
+  
+  // Test method to check if audio files are accessible
+  async testAudioFile(audioPath) {
+    console.log(`Testing audio file: ${audioPath}`);
+    try {
+      const audio = new Audio(audioPath);
+      return new Promise((resolve, reject) => {
+        audio.addEventListener('canplaythrough', () => {
+          console.log(`✅ Audio file test successful: ${audioPath}`);
+          resolve(true);
+        });
+        
+        audio.addEventListener('error', (error) => {
+          console.error(`❌ Audio file test failed: ${audioPath}`, error);
+          reject(error);
+        });
+        
+        audio.load();
+      });
+    } catch (error) {
+      console.error(`❌ Audio file test exception: ${audioPath}`, error);
+      throw error;
+    }
   }
   
   async initializeAudio() {
@@ -36,7 +61,13 @@ export class AudioSystem {
     }
     
     if (this.audioContext && this.audioContext.state === 'suspended') {
-      await this.audioContext.resume();
+      console.log('Audio context suspended, attempting to resume...');
+      try {
+        await this.audioContext.resume();
+        console.log('Audio context resumed successfully');
+      } catch (error) {
+        console.error('Failed to resume audio context:', error);
+      }
     }
   }
   
@@ -247,21 +278,29 @@ export class AudioSystem {
   async playAnimalSound(direction) {
     await this.ensureAudioContext();
     
+    console.log(`Attempting to play animal sound for direction: ${direction}`);
+    console.log(`Animal data available:`, this.animalData);
+    
     // Try to load and play actual audio file if available
     if (this.animalData && this.animalData[direction]) {
       const animal = this.animalData[direction];
+      console.log(`Animal found:`, animal);
       
       // Try to play the actual audio file
       try {
         await this.playAudioFile(animal.audioFile);
-        console.log(`${animal.emoji} Playing ${animal.names[0]} sound: ${animal.audioFile}`);
+        console.log(`${animal.emoji} Successfully played ${animal.names[0]} sound: ${animal.audioFile}`);
         return;
       } catch (error) {
-        console.warn(`Could not play audio file ${animal.audioFile}, using placeholder sound`);
+        console.warn(`Could not play audio file ${animal.audioFile}:`, error);
+        console.log('Falling back to placeholder sound');
       }
+    } else {
+      console.log('No animal data available, using placeholder sound');
     }
     
     // Fallback to placeholder sounds for different directions
+    console.log(`Playing placeholder sound for direction: ${direction}`);
     switch (direction) {
       case 'up':
         // High pitched chirp
@@ -289,6 +328,7 @@ export class AudioSystem {
         console.log('🐎 Playing horse sound placeholder');
         break;
       default:
+        console.log('Playing default move sound');
         this.playMoveSound();
     }
   }
@@ -359,16 +399,35 @@ export class AudioSystem {
     return new Promise((resolve, reject) => {
       const audio = new Audio(audioPath);
       
+      console.log(`Attempting to load audio file: ${audioPath}`);
+      
       audio.addEventListener('canplaythrough', () => {
+        console.log(`Audio file loaded successfully: ${audioPath}`);
         audio.play()
-          .then(() => resolve())
-          .catch(reject);
+          .then(() => {
+            console.log(`Audio file played successfully: ${audioPath}`);
+            resolve();
+          })
+          .catch(error => {
+            console.error(`Failed to play audio file ${audioPath}:`, error);
+            reject(error);
+          });
       });
       
-      audio.addEventListener('error', reject);
+      audio.addEventListener('error', (error) => {
+        console.error(`Failed to load audio file ${audioPath}:`, error);
+        reject(error);
+      });
+      
+      audio.addEventListener('loadstart', () => {
+        console.log(`Started loading audio file: ${audioPath}`);
+      });
       
       // Set volume
       audio.volume = this.gainNode ? this.gainNode.gain.value : 0.3;
+      
+      // Try to load the audio file
+      audio.load();
     });
   }
   
