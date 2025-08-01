@@ -181,6 +181,24 @@ export class AudioSystem {
     }, 200);
   }
   
+  async playGameOverSound() {
+    await this.ensureAudioContext();
+    
+    // Create a descending game over sound
+    const notes = [330, 294, 262, 220]; // E, D, C, A (descending)
+    
+    notes.forEach((frequency, index) => {
+      setTimeout(() => {
+        this.createOscillator(frequency, 'sawtooth', 0.5);
+      }, index * 150);
+    });
+    
+    // Add a final low note
+    setTimeout(() => {
+      this.createOscillator(147, 'square', 1.0); // Low D
+    }, 600);
+  }
+  
   playMoveSound() {
     if (!this.initialized) return;
     

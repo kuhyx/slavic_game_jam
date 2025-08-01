@@ -1,14 +1,15 @@
 # Danger Field Game
 
-A browser-based danger field game where players navigate through an open area filled with hidden and visible dangers. The game provides multiple types of feedback to enhance the gaming experience.
+A challenging browser-based danger field game where players must navigate through a deadly minefield using visual and audio cues. One wrong step ends the game!
 
 ## Features
 
 ### Core Gameplay
 - **Player Movement**: Navigate using WASD keys or arrow keys
-- **Open Field**: No internal walls - only outer boundary is impassable
-- **Mixed Dangers**: Scattered visual and audio danger squares throughout the field
-- **Goal**: Reach the exit (🏁) while avoiding various types of dangers
+- **Open Minefield**: No internal walls - only outer boundary is impassable
+- **Deadly Dangers**: Both visual and hidden dangers end the game instantly
+- **High Stakes**: Navigate carefully - there are no second chances!
+- **Goal**: Reach the exit (🏁) without touching any dangerous squares
 
 ### Feedback Systems
 - **Visual Feedback**: 
@@ -28,9 +29,8 @@ A browser-based danger field game where players navigate through an open area fi
   - Built with Web Audio API with stereo panning and pitch modulation
 
 - **Haptic Feedback**: 
-  - **Visual danger**: Quick double vibration (no audio)
-  - **Audio danger**: Long vibration pattern with audio
-  - **Victory**: Celebration vibration pattern
+  - **Game Over**: Strong vibration pattern when touching dangerous squares
+  - **Victory**: Celebration vibration pattern when reaching the exit
   - Toggle on/off functionality
 
 ### Technical Features
@@ -68,15 +68,16 @@ npm run build
 ## How to Play
 
 1. **Movement**: Use WASD keys or arrow keys to move your character (green circle)
-2. **Visual Dangers**: Red animated squares are dangerous - avoid them for safety
-3. **Hidden Audio Dangers**: Some white squares look safe but are dangerous
+2. **Avoid All Dangers**: Both red squares and hidden audio dangers are **deadly**!
+3. **Game Over**: Stepping on any dangerous square ends the game immediately
 4. **Directional Audio Cues**: 
    - **Left/Right panning**: Sound comes from the side where hidden dangers are located
    - **Pitch variation**: Higher pitch for dangers above, lower pitch for dangers below
-   - **Rhythmic patterns**: Different timing patterns indicate direction
+   - **Proximity warnings**: Listen carefully to avoid hidden dangers
 5. **Open Navigation**: Move freely through the field - only the outer boundary blocks you
 6. **Find the Exit**: Navigate to the green flag (🏁) to complete the level
-7. **Headphone Recommended**: Use headphones or good speakers for optimal directional audio experience
+7. **Challenge**: Complete the field without touching any dangerous squares!
+8. **Headphone Recommended**: Use headphones or good speakers for optimal directional audio experience
 
 ## Game Controls
 

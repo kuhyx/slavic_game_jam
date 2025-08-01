@@ -80,21 +80,28 @@ export class Game {
   }
   
   handleVisualDanger() {
-    // Visual danger squares only provide vibration feedback (no audio)
-    if (this.vibrationEnabled && navigator.vibrate) {
-      navigator.vibrate([150, 50, 150]); // Quick double vibration
-    }
+    // Visual danger squares end the game
+    this.gameOver();
   }
   
   handleAudioDanger() {
-    // Audio danger squares provide both sound and vibration
+    // Audio danger squares end the game
+    this.gameOver();
+  }
+  
+  gameOver() {
     if (this.soundEnabled) {
-      this.audioSystem.playDangerSound();
+      this.audioSystem.playGameOverSound();
     }
     
     if (this.vibrationEnabled && navigator.vibrate) {
-      navigator.vibrate([200, 100, 200]); // Pattern: vibrate-pause-vibrate
+      navigator.vibrate([300, 100, 300, 100, 300]); // Game over vibration pattern
     }
+    
+    setTimeout(() => {
+      alert('Game Over! You stepped on a dangerous square.\nReturning to start...');
+      this.resetGame();
+    }, 500);
   }
   
   handleWin() {
@@ -107,7 +114,7 @@ export class Game {
     }
     
     setTimeout(() => {
-      alert('Congratulations! You completed the labyrinth!');
+      alert('🎉 Congratulations! You survived the danger field!\nGenerating new challenge...');
       this.resetGame();
     }, 500);
   }
