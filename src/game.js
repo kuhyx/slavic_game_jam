@@ -23,6 +23,7 @@ export class Game {
     
     // Game state
     this.soundEnabled = true;
+    this.speechEnabled = true;
     this.vibrationEnabled = true;
     this.lastProximityWarning = 0;
     
@@ -32,6 +33,7 @@ export class Game {
   
   setupControls() {
     const soundToggle = document.getElementById('soundToggle');
+    const speechToggle = document.getElementById('speechToggle');
     const vibrationToggle = document.getElementById('vibrationToggle');
     
     soundToggle.addEventListener('click', () => {
@@ -40,6 +42,12 @@ export class Game {
       if (!this.soundEnabled) {
         this.audioSystem.stopAll();
       }
+    });
+
+    speechToggle.addEventListener('click', () => {
+      this.speechEnabled = !this.speechEnabled;
+      speechToggle.textContent = `🗣️ Speech: ${this.speechEnabled ? 'ON' : 'OFF'}`;
+      this.audioSystem.setSpeechEnabled(this.speechEnabled);
     });
     
     vibrationToggle.addEventListener('click', () => {
@@ -127,20 +135,20 @@ export class Game {
   update(deltaTime) {
     this.player.update(deltaTime);
     
-    // Check proximity to audio danger squares and play directional warning sounds
-    if (this.soundEnabled) {
+    // Check proximity to audio danger squares and play directional warning speech
+    if (this.speechEnabled) {
       const directions = this.maze.getAudioDangerDirections(this.player.x, this.player.y);
       if (directions.squares.length > 0) {
         this.playDirectionalProximityWarning(directions);
       }
     }
   }
-  
+
   playDirectionalProximityWarning(directions) {
-    // Play a directional warning sound when near audio danger squares
+    // Play a directional warning speech when near audio danger squares
     // Use a timer to avoid playing too frequently
     const now = Date.now();
-    if (!this.lastProximityWarning || now - this.lastProximityWarning > 1000) {
+    if (!this.lastProximityWarning || now - this.lastProximityWarning > 1500) {
       this.audioSystem.playDirectionalProximitySound(directions);
       this.lastProximityWarning = now;
     }

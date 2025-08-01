@@ -4,6 +4,8 @@ export class AudioSystem {
     this.gainNode = null;
     this.activeSounds = new Set();
     this.initialized = false;
+    this.lastSpokenDirection = '';
+    this.speechEnabled = true;
     
     this.initializeAudio();
   }
@@ -127,39 +129,68 @@ export class AudioSystem {
   }
   
   async playDirectionalProximitySound(directions) {
-    await this.ensureAudioContext();
-    
-    // Calculate the dominant direction for panning
-    let panValue = 0;
-    let pitchModifier = 0;
-    
-    // Horizontal panning (left/right)
-    if (directions.left && !directions.right) {
-      panValue = -0.7; // Pan left
-    } else if (directions.right && !directions.left) {
-      panValue = 0.7; // Pan right
+    // Use text-to-speech instead of sounds
+    this.speakDirections(directions);
+  }
+
+  speakDirections(directions) {
+    if (!this.speechEnabled || !('speechSynthesis' in window)) {
+      return;
     }
+
+    // Determine which directions to announce
+    const activeDirections = [];
     
-    // Vertical pitch variation (up/down)
-    if (directions.up && !directions.down) {
-      pitchModifier = 50; // Higher pitch for above
-    } else if (directions.down && !directions.up) {
-      pitchModifier = -50; // Lower pitch for below
+    if (directions.up) activeDirections.push('up');
+    if (directions.down) activeDirections.push('down');
+    if (directions.left) activeDirections.push('left');
+    if (directions.right) activeDirections.push('right');
+
+    if (activeDirections.length === 0) {
+      return;
     }
+
+    // Create the text to speak
+    let textToSpeak;
+    if (activeDirections.length === 1) {
+      textToSpeak = activeDirections[0];
+    } else if (activeDirections.length === 2) {
+      textToSpeak = activeDirections.join(' and ');
+    } else {
+      textToSpeak = activeDirections.slice(0, -1).join(', ') + ', and ' + activeDirections[activeDirections.length - 1];
+    }
+
+    // Avoid repeating the same direction announcement
+    if (textToSpeak === this.lastSpokenDirection) {
+      return;
+    }
+    this.lastSpokenDirection = textToSpeak;
+
+    // Stop any currently playing speech
+    speechSynthesis.cancel();
+
+    // Create and configure the speech utterance
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 1.2; // Slightly faster speech
+    utterance.pitch = 1.0;
+    utterance.volume = 0.8;
     
-    // Create directional warning sounds
-    this.createOscillator(300, 'sine', 0.15, panValue, pitchModifier);
-    this.createOscillator(250, 'sine', 0.15, panValue, pitchModifier * 0.5);
-    
-    // Add subtle rhythmic variation based on direction
-    if (directions.up) {
-      // Quick double beep for above
+    // Clear the last spoken direction when speech ends
+    utterance.onend = () => {
       setTimeout(() => {
-        this.createOscillator(350, 'sine', 0.05, panValue, pitchModifier);
-      }, 80);
-    } else if (directions.down) {
-      // Slower, deeper sound for below
-      this.createOscillator(200, 'sine', 0.2, panValue, pitchModifier);
+        this.lastSpokenDirection = '';
+      }, 500); // Small delay to prevent immediate repetition
+    };
+
+    // Speak the directions
+    speechSynthesis.speak(utterance);
+  }
+
+  setSpeechEnabled(enabled) {
+    this.speechEnabled = enabled;
+    if (!enabled) {
+      speechSynthesis.cancel();
+      this.lastSpokenDirection = '';
     }
   }
   
