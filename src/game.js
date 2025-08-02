@@ -11,7 +11,7 @@ export class Game {
     this.lastTime = 0;
     
     // Game settings
-    this.cellSize = 40;
+    this.cellSize = 50;
     this.cols = Math.floor(canvas.width / this.cellSize);
     this.rows = Math.floor(canvas.height / this.cellSize);
     
