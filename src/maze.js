@@ -275,7 +275,7 @@ export class Maze {
     return this.grid[y][x] === this.EXIT;
   }
   
-  render(ctx, cellSize) {
+  render(ctx, cellSize, debugMode = false) {
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         const pixelX = x * cellSize;
@@ -291,8 +291,7 @@ export class Maze {
             break;
             
           case this.SAFE:
-          case this.DANGEROUS_AUDIO:
-            // Safe squares and audio-danger squares look identical (white)
+            // Safe squares - white
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
             // Add subtle grid lines
@@ -300,9 +299,41 @@ export class Maze {
             ctx.lineWidth = 1;
             ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
             break;
-            //debug
-          // case this.DANGEROUS_AUDIO:  
 
+          case this.DANGEROUS_AUDIO:
+            if (debugMode) {
+              // In debug mode, show audio danger squares with a blue overlay
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add blue debug overlay with pulsing effect
+              const time = Date.now() * 0.004;
+              const pulse = (Math.sin(time + x + y) + 1) * 0.5;
+              const alpha = 0.3 + pulse * 0.4;
+              ctx.fillStyle = `rgba(0, 100, 255, ${alpha})`;
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add debug border
+              ctx.strokeStyle = '#0066ff';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add audio symbol
+              ctx.fillStyle = '#ffffff';
+              ctx.font = `${cellSize * 0.4}px Arial`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('🔊', pixelX + cellSize / 2, pixelY + cellSize / 2);
+            } else {
+              // In normal mode, audio-danger squares look identical to safe squares (white)
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              // Add subtle grid lines
+              ctx.strokeStyle = '#e0e0e0';
+              ctx.lineWidth = 1;
+              ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+            }
+            break;
             
           case this.DANGEROUS_VISUAL:
             // Visual-only danger squares - animated red appearance
