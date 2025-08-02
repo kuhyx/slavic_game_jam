@@ -134,7 +134,15 @@ export class AudioSystem {
   }
 
   speakDirections(directions) {
-    if (!this.speechEnabled || !('speechSynthesis' in window)) {
+    console.log('speakDirections called with:', directions);
+    
+    if (!this.speechEnabled) {
+      console.log('Speech is disabled');
+      return;
+    }
+    
+    if (!('speechSynthesis' in window)) {
+      console.error('Speech synthesis not supported in this browser');
       return;
     }
 
@@ -146,7 +154,10 @@ export class AudioSystem {
     if (directions.left) activeDirections.push('left');
     if (directions.right) activeDirections.push('right');
 
+    console.log('Active directions:', activeDirections);
+
     if (activeDirections.length === 0) {
+      console.log('No active directions to announce');
       return;
     }
 
@@ -160,8 +171,12 @@ export class AudioSystem {
       textToSpeak = activeDirections.slice(0, -1).join(', ') + ', and ' + activeDirections[activeDirections.length - 1];
     }
 
+    console.log('Text to speak:', textToSpeak);
+    console.log('Last spoken direction:', this.lastSpokenDirection);
+
     // Avoid repeating the same direction announcement
     if (textToSpeak === this.lastSpokenDirection) {
+      console.log('Skipping duplicate direction announcement');
       return;
     }
     this.lastSpokenDirection = textToSpeak;
@@ -169,21 +184,89 @@ export class AudioSystem {
     // Stop any currently playing speech
     speechSynthesis.cancel();
 
-    // Create and configure the speech utterance
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 1.2; // Slightly faster speech
-    utterance.pitch = 1.0;
-    utterance.volume = 0.8;
-    
-    // Clear the last spoken direction when speech ends
-    utterance.onend = () => {
-      setTimeout(() => {
-        this.lastSpokenDirection = '';
-      }, 500); // Small delay to prevent immediate repetition
-    };
+    try {
+      // Check if speechSynthesis is ready
+      if (speechSynthesis.speaking) {
+        console.log('Speech synthesis is currently speaking, canceling...');
+        speechSynthesis.cancel();
+      }
 
-    // Speak the directions
-    speechSynthesis.speak(utterance);
+      // Wait a bit for cancellation to complete
+      setTimeout(() => {
+        try {
+          // Create and configure the speech utterance
+          const utterance = new SpeechSynthesisUtterance(textToSpeak);
+          utterance.rate = 1.0; // Normal speech rate to avoid issues
+          utterance.pitch = 1.0;
+          utterance.volume = 0.8;
+          utterance.lang = 'en-US'; // Explicitly set language
+          
+          // Enhanced event handlers
+          utterance.onstart = () => {
+            console.log('Speech started for:', textToSpeak);
+          };
+
+          utterance.onend = () => {
+            console.log('Speech ended for:', textToSpeak);
+            setTimeout(() => {
+              this.lastSpokenDirection = '';
+            }, 500);
+          };
+
+          utterance.onerror = (event) => {
+            console.error('Speech synthesis error:', event.error, 'for text:', textToSpeak);
+            console.error('Error details:', event);
+            
+            // Try to recover by clearing the last spoken direction
+            setTimeout(() => {
+              this.lastSpokenDirection = '';
+            }, 100);
+            
+            // Fallback: try a simpler approach
+            this.fallbackSpeech(textToSpeak);
+          };
+
+          utterance.onpause = () => {
+            console.log('Speech paused');
+          };
+
+          utterance.onresume = () => {
+            console.log('Speech resumed');
+          };
+
+          // Check if voices are available
+          const voices = speechSynthesis.getVoices();
+          console.log('Available voices:', voices.length, voices.map(v => v.name));
+          
+          if (voices.length > 0) {
+            // Try to use a default English voice
+            const englishVoice = voices.find(voice => 
+              voice.lang.startsWith('en') && voice.default
+            ) || voices.find(voice => 
+              voice.lang.startsWith('en')
+            ) || voices[0];
+            
+            if (englishVoice) {
+              utterance.voice = englishVoice;
+              console.log('Using voice:', englishVoice.name, englishVoice.lang);
+            }
+          }
+
+          console.log('Starting speech synthesis for:', textToSpeak);
+          
+          // Speak the directions
+          speechSynthesis.speak(utterance);
+          
+        } catch (innerError) {
+          console.error('Inner error in speech synthesis:', innerError);
+          this.fallbackSpeech(textToSpeak);
+        }
+      }, 100); // Small delay to ensure cancellation completes
+      
+    } catch (error) {
+      console.error('Outer error in speech synthesis:', error);
+      this.fallbackSpeech(textToSpeak);
+    }
   }
 
   setSpeechEnabled(enabled) {
@@ -192,6 +275,31 @@ export class AudioSystem {
       speechSynthesis.cancel();
       this.lastSpokenDirection = '';
     }
+  }
+
+  // Debug methods for testing directions
+  debugTestDirection(direction) {
+    console.log('Debug: Testing direction:', direction);
+    const testDirections = {
+      up: direction === 'up',
+      down: direction === 'down',
+      left: direction === 'left',
+      right: direction === 'right',
+      squares: [{ x: 0, y: 0, dx: 0, dy: 0 }] // Mock square data
+    };
+    this.speakDirections(testDirections);
+  }
+
+  debugTestMultipleDirections(directionsArray) {
+    console.log('Debug: Testing multiple directions:', directionsArray);
+    const testDirections = {
+      up: directionsArray.includes('up'),
+      down: directionsArray.includes('down'),
+      left: directionsArray.includes('left'),
+      right: directionsArray.includes('right'),
+      squares: [{ x: 0, y: 0, dx: 0, dy: 0 }] // Mock square data
+    };
+    this.speakDirections(testDirections);
   }
   
   async playWinSound() {

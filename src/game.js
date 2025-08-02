@@ -25,6 +25,7 @@ export class Game {
     this.soundEnabled = true;
     this.speechEnabled = true;
     this.vibrationEnabled = true;
+    this.debugMode = false;
     this.lastProximityWarning = 0;
     
     this.setupControls();
@@ -35,6 +36,7 @@ export class Game {
     const soundToggle = document.getElementById('soundToggle');
     const speechToggle = document.getElementById('speechToggle');
     const vibrationToggle = document.getElementById('vibrationToggle');
+    const debugToggle = document.getElementById('debugToggle');
     
     soundToggle.addEventListener('click', () => {
       this.soundEnabled = !this.soundEnabled;
@@ -53,6 +55,76 @@ export class Game {
     vibrationToggle.addEventListener('click', () => {
       this.vibrationEnabled = !this.vibrationEnabled;
       vibrationToggle.textContent = `📳 Vibration: ${this.vibrationEnabled ? 'ON' : 'OFF'}`;
+    });
+
+    debugToggle.addEventListener('click', () => {
+      this.debugMode = !this.debugMode;
+      debugToggle.textContent = `🐛 Debug: ${this.debugMode ? 'ON' : 'OFF'}`;
+      
+      // Show/hide debug controls
+      const debugControls = document.getElementById('debugControls');
+      debugControls.style.display = this.debugMode ? 'block' : 'none';
+      
+      // Setup debug button listeners if debug mode is enabled
+      if (this.debugMode) {
+        this.setupDebugControls();
+      }
+    });
+  }
+
+  setupDebugControls() {
+    const testUp = document.getElementById('testUp');
+    const testDown = document.getElementById('testDown');
+    const testLeft = document.getElementById('testLeft');
+    const testRight = document.getElementById('testRight');
+    const testMultiple = document.getElementById('testMultiple');
+    const testAllDirections = document.getElementById('testAllDirections');
+
+    // Remove existing listeners to prevent duplicates
+    const buttons = [testUp, testDown, testLeft, testRight, testMultiple, testAllDirections];
+    buttons.forEach(button => {
+      if (button) {
+        button.replaceWith(button.cloneNode(true));
+      }
+    });
+
+    // Get fresh references after cloning
+    const newTestUp = document.getElementById('testUp');
+    const newTestDown = document.getElementById('testDown');
+    const newTestLeft = document.getElementById('testLeft');
+    const newTestRight = document.getElementById('testRight');
+    const newTestMultiple = document.getElementById('testMultiple');
+    const newTestAllDirections = document.getElementById('testAllDirections');
+
+    // Add click listeners
+    newTestUp?.addEventListener('click', () => {
+      console.log('Debug: Testing UP direction');
+      this.audioSystem.debugTestDirection('up');
+    });
+
+    newTestDown?.addEventListener('click', () => {
+      console.log('Debug: Testing DOWN direction');
+      this.audioSystem.debugTestDirection('down');
+    });
+
+    newTestLeft?.addEventListener('click', () => {
+      console.log('Debug: Testing LEFT direction');
+      this.audioSystem.debugTestDirection('left');
+    });
+
+    newTestRight?.addEventListener('click', () => {
+      console.log('Debug: Testing RIGHT direction');
+      this.audioSystem.debugTestDirection('right');
+    });
+
+    newTestMultiple?.addEventListener('click', () => {
+      console.log('Debug: Testing UP and RIGHT directions');
+      this.audioSystem.debugTestMultipleDirections(['up', 'right']);
+    });
+
+    newTestAllDirections?.addEventListener('click', () => {
+      console.log('Debug: Testing ALL directions');
+      this.audioSystem.debugTestMultipleDirections(['up', 'down', 'left', 'right']);
     });
   }
   
@@ -149,6 +221,7 @@ export class Game {
     // Use a timer to avoid playing too frequently
     const now = Date.now();
     if (!this.lastProximityWarning || now - this.lastProximityWarning > 1500) {
+      console.log('Playing directional proximity sound');
       this.audioSystem.playDirectionalProximitySound(directions);
       this.lastProximityWarning = now;
     }
@@ -159,8 +232,8 @@ export class Game {
     this.ctx.fillStyle = '#1a1a1a';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
-    // Render maze
-    this.maze.render(this.ctx, this.cellSize);
+    // Render maze with debug mode
+    this.maze.render(this.ctx, this.cellSize, this.debugMode);
     
     // Render player
     this.player.render(this.ctx);
