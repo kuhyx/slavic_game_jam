@@ -2,6 +2,7 @@ export class InputHandler {
   constructor() {
     this.keys = new Set();
     this.onMove = null; // Callback for movement
+    this.onProbe = null; // Callback for probing with Shift+direction
     this.moveDelay = 150; // Milliseconds between moves
     this.lastMoveTime = 0;
     
@@ -36,6 +37,7 @@ export class InputHandler {
     }
     
     let direction = null;
+    const isShiftHeld = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight');
     
     // Check for movement keys (WASD or Arrow keys)
     if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) {
@@ -48,9 +50,16 @@ export class InputHandler {
       direction = { x: 1, y: 0 };
     }
     
-    if (direction && this.onMove) {
-      this.onMove(direction);
-      this.lastMoveTime = now;
+    if (direction) {
+      if (isShiftHeld && this.onProbe) {
+        // Shift is held, this is a probe action
+        this.onProbe(direction);
+        this.lastMoveTime = now;
+      } else if (!isShiftHeld && this.onMove) {
+        // Normal movement
+        this.onMove(direction);
+        this.lastMoveTime = now;
+      }
     }
   }
   
@@ -68,7 +77,31 @@ export class InputHandler {
       down: this.keys.has('KeyS') || this.keys.has('ArrowDown'),
       left: this.keys.has('KeyA') || this.keys.has('ArrowLeft'),
       right: this.keys.has('KeyD') || this.keys.has('ArrowRight'),
+      shift: this.keys.has('ShiftLeft') || this.keys.has('ShiftRight'),
     };
+  }
+  
+  // Toggle Caps Lock as fallback for vibration
+  toggleCapsLock() {
+    // Create a temporary input to simulate caps lock toggle
+    const temp = document.createElement('input');
+    temp.style.position = 'absolute';
+    temp.style.left = '-9999px';
+    document.body.appendChild(temp);
+    temp.focus();
+    
+    // Simulate caps lock key press
+    const event = new KeyboardEvent('keydown', {
+      key: 'CapsLock',
+      code: 'CapsLock',
+      keyCode: 20,
+      which: 20
+    });
+    temp.dispatchEvent(event);
+    
+    setTimeout(() => {
+      document.body.removeChild(temp);
+    }, 100);
   }
   
   // Clean up event listeners

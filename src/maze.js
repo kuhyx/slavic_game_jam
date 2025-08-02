@@ -12,7 +12,8 @@ export class Maze {
     this.SAFE = 1;
     this.DANGEROUS_VISUAL = 2;  // Visually dangerous, no audio
     this.DANGEROUS_AUDIO = 3;   // Looks safe, has audio when near
-    this.EXIT = 4;
+    this.DANGEROUS_HIDDEN = 4;  // Invisible, only detectable with Shift+direction
+    this.EXIT = 5;
   }
   
   generate() {
@@ -89,16 +90,18 @@ export class Maze {
       }
     }
     
-    // Calculate target number of dangerous squares (30% of inner safe squares)
-    const totalDangerousCount = Math.floor(innerSafeSquares.length * 0.3);
-    const visualDangerousCount = Math.floor(totalDangerousCount * 0.5);
-    const audioDangerousCount = totalDangerousCount - visualDangerousCount;
+    // Calculate target number of dangerous squares (40% of inner safe squares)
+    const totalDangerousCount = Math.floor(innerSafeSquares.length * 0.4);
+    const visualDangerousCount = Math.floor(totalDangerousCount * 0.33);
+    const audioDangerousCount = Math.floor(totalDangerousCount * 0.33);
+    const hiddenDangerousCount = totalDangerousCount - visualDangerousCount - audioDangerousCount;
     
     this.shuffle(innerSafeSquares);
     
     let addedDangerous = 0;
     let addedVisual = 0;
     let addedAudio = 0;
+    let addedHidden = 0;
     
     // Add dangerous squares one by one, checking path after each addition
     for (let i = 0; i < innerSafeSquares.length && addedDangerous < totalDangerousCount; i++) {
@@ -110,6 +113,8 @@ export class Maze {
         dangerType = this.DANGEROUS_VISUAL;
       } else if (addedAudio < audioDangerousCount) {
         dangerType = this.DANGEROUS_AUDIO;
+      } else if (addedHidden < hiddenDangerousCount) {
+        dangerType = this.DANGEROUS_HIDDEN;
       } else {
         break; // We've added enough dangerous squares
       }
@@ -125,8 +130,10 @@ export class Maze {
         addedDangerous++;
         if (dangerType === this.DANGEROUS_VISUAL) {
           addedVisual++;
-        } else {
+        } else if (dangerType === this.DANGEROUS_AUDIO) {
           addedAudio++;
+        } else {
+          addedHidden++;
         }
       } else {
         // Path blocked, revert this square to safe
@@ -218,6 +225,10 @@ export class Maze {
   
   isDangerousAudio(x, y) {
     return this.grid[y][x] === this.DANGEROUS_AUDIO;
+  }
+  
+  isDangerousHidden(x, y) {
+    return this.grid[y][x] === this.DANGEROUS_HIDDEN;
   }
   
   isNearAudioDanger(playerX, playerY, range = 1) {
@@ -326,6 +337,41 @@ export class Maze {
               ctx.fillText('🔊', pixelX + cellSize / 2, pixelY + cellSize / 2);
             } else {
               // In normal mode, audio-danger squares look identical to safe squares (white)
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              // Add subtle grid lines
+              ctx.strokeStyle = '#e0e0e0';
+              ctx.lineWidth = 1;
+              ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+            }
+            break;
+            
+          case this.DANGEROUS_HIDDEN:
+            if (debugMode) {
+              // In debug mode, show hidden danger squares with a purple overlay
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add purple debug overlay with pulsing effect
+              const hiddenTime = Date.now() * 0.004;
+              const hiddenPulse = (Math.sin(hiddenTime + x + y) + 1) * 0.5;
+              const hiddenAlpha = 0.3 + hiddenPulse * 0.4;
+              ctx.fillStyle = `rgba(128, 0, 128, ${hiddenAlpha})`;
+              ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add debug border
+              ctx.strokeStyle = '#800080';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(pixelX, pixelY, cellSize, cellSize);
+              
+              // Add hidden symbol
+              ctx.fillStyle = '#ffffff';
+              ctx.font = `${cellSize * 0.4}px Arial`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('👁️', pixelX + cellSize / 2, pixelY + cellSize / 2);
+            } else {
+              // In normal mode, hidden danger squares look identical to safe squares
               ctx.fillStyle = '#ffffff';
               ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
               // Add subtle grid lines

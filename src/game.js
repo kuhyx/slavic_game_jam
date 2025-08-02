@@ -137,6 +137,10 @@ export class Game {
     this.inputHandler.onMove = (direction) => {
       this.movePlayer(direction);
     };
+    
+    this.inputHandler.onProbe = (direction) => {
+      this.probeDirection(direction);
+    };
   }
   
   movePlayer(direction) {
@@ -160,10 +164,30 @@ export class Game {
         this.handleAudioDanger();
       }
       
+      // Check if player stepped on a hidden danger square
+      if (this.maze.isDangerousHidden(newX, newY)) {
+        this.handleHiddenDanger();
+      }
+      
       // Check if player reached the exit
       if (this.maze.isExit(newX, newY)) {
         this.handleWin();
       }
+    }
+  }
+  
+  probeDirection(direction) {
+    const probeX = this.player.x + direction.x;
+    const probeY = this.player.y + direction.y;
+    
+    // Check if probe position is within bounds
+    if (probeX < 0 || probeX >= this.maze.cols || probeY < 0 || probeY >= this.maze.rows) {
+      return;
+    }
+    
+    // Check if the probed square has a hidden danger
+    if (this.maze.isDangerousHidden(probeX, probeY)) {
+      this.handleHiddenDangerDetected();
     }
   }
   
@@ -186,6 +210,25 @@ export class Game {
   handleAudioDanger() {
     // Audio danger squares end the game
     this.gameOver();
+  }
+  
+  handleHiddenDanger() {
+    // Hidden danger squares end the game
+    this.gameOver();
+  }
+  
+  handleHiddenDangerDetected() {
+    // Player detected a hidden danger with Shift+direction
+    console.log('Hidden danger detected!');
+    
+    // Try vibration first
+    if (this.vibrationEnabled && navigator.vibrate) {
+      navigator.vibrate([200, 100, 200]); // Danger detection pattern
+    } else {
+      // Fallback to caps lock toggle
+      this.inputHandler.toggleCapsLock();
+      console.log('Caps Lock toggled as vibration fallback');
+    }
   }
   
   gameOver() {
