@@ -372,4 +372,16 @@ export class Maze {
       }
     }
   }
+  
+  cloneMaze() {
+    // Create a deep copy of the current maze state for replay
+    return {
+      grid: this.grid.map(row => [...row]),
+      dangerousSquares: new Set(this.dangerousSquares),
+      exitX: this.exitX,
+      exitY: this.exitY,
+      cols: this.cols,
+      rows: this.rows
+    };
+  }
 }
